@@ -33,6 +33,9 @@ static int animationDirection = 1;     // Направление анимаци�
 static float rotationX = 0.0f;         // Поворот вокруг оси X
 static float rotationY = 0.0f;         // Поворот вокруг оси Y
 static float rotationZ = 0.0f;         // Поворот вокруг оси Z
+static float deformationScale = 1.0f;  // Масштаб деформации
+static int showLoad = 1;               // Показывать нагрузку
+static float loadAnimation = 0.0f;     // Анимация нагрузки
 
 void drawMashForSolve3d(int argc, char **argv);
 void drawModel3d(void);
@@ -75,7 +78,7 @@ int main(int argc, char **argv) {
   
   // Чтение данных из файла
   printf("Reading file...\n");
-  short fileErr = readFromFile3d("../nodes/cube3d.txt", &nys, &dataCar, &car,
+  short fileErr = readFromFile3d("../nodes/beam3d.txt", &nys, &dataCar, &car,
                                  &nelem, &data_jt03, &jt03);
   
   if (fileErr != 0) {
@@ -233,9 +236,9 @@ void display3d(void) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
   
-  // Улучшенная настройка камеры - отодвигаем камеру дальше
-  gluLookAt(5.0, 5.0, 5.0,  // позиция камеры (дальше от центра)
-            0.5, 0.5, 0.5,   // точка, на которую смотрит камера (центр куба)
+  // Настройка камеры для обзора балки
+  gluLookAt(8.0, 4.0, 6.0,  // позиция камеры
+            2.0, 0.25, 0.25,   // точка, на которую смотрит камера (центр балки)
             0.0, 1.0, 0.0);  // вектор "вверх"
   
   // Применение поворотов
@@ -267,7 +270,7 @@ void drawModel3d(void) {
   // Ось X - красная
   glColor3f(1.0, 0.0, 0.0);
   glVertex3f(0.0, 0.0, 0.0);
-  glVertex3f(2.0, 0.0, 0.0);
+  glVertex3f(6.0, 0.0, 0.0);
   // Ось Y - зеленая
   glColor3f(0.0, 1.0, 0.0);
   glVertex3f(0.0, 0.0, 0.0);
@@ -278,6 +281,32 @@ void drawModel3d(void) {
   glVertex3f(0.0, 0.0, 2.0);
   glEnd();
   glEnable(GL_LIGHTING);
+  
+  // Отрисовка нагрузки (сила в конце балки)
+  if (showLoad) {
+    glDisable(GL_LIGHTING);
+    glColor3f(1.0, 0.0, 0.0);  // Красный цвет для нагрузки
+    
+    float loadX = 4.0f;  // Позиция нагрузки (конец балки)
+    float loadY = 0.25f;
+    float loadZ = 0.25f;
+    float loadSize = 0.3f * (0.5f + 0.5f * sin(loadAnimation));  // Пульсирующая нагрузка
+    
+    // Отрисовка стрелки нагрузки
+    glBegin(GL_LINES);
+    glVertex3f(loadX, loadY, loadZ);
+    glVertex3f(loadX, loadY - loadSize, loadZ);
+    glEnd();
+    
+    // Острие стрелки
+    glBegin(GL_TRIANGLES);
+    glVertex3f(loadX, loadY - loadSize, loadZ);
+    glVertex3f(loadX - 0.1f, loadY - loadSize + 0.1f, loadZ);
+    glVertex3f(loadX + 0.1f, loadY - loadSize + 0.1f, loadZ);
+    glEnd();
+    
+    glEnable(GL_LIGHTING);
+  }
   
   // Отрисовка тетраэдров из файла данных
   if (jt03 != NULL && car != NULL && nelem > 0) {
@@ -309,6 +338,30 @@ void drawModel3d(void) {
         {car[node4][0], car[node4][1], car[node4][2]}
       };
       
+      // Применяем деформацию к вершинам
+      if (showDeformed && isAnimating) {
+        for (int i = 0; i < 4; i++) {
+          // Простая модель деформации балки под нагрузкой
+          float x = vertices[i][0];
+          
+          // Деформация зависит от расстояния от закрепленного конца
+          float deflection = 0.0f;
+          if (x > 0.0f) {
+            // Максимальный прогиб в конце балки
+            float maxDeflection = 0.5f * animationProgress * deformationScale;
+            // Параболическая форма прогиба
+            deflection = maxDeflection * (x * x) / 16.0f;  // 4^2 = 16
+          }
+          
+          // Применяем прогиб в направлении Y
+          vertices[i][1] += deflection;
+          
+          // Добавляем небольшое скручивание
+          float twist = 0.1f * animationProgress * sin(x * M_PI / 4.0f);
+          vertices[i][2] += twist;
+        }
+      }
+      
       // Проверяем, что тетраэдр имеет ненулевой объем (используем абсолютное значение)
       double detJ = (vertices[1][0] - vertices[0][0]) * 
                     ((vertices[2][1] - vertices[0][1]) * (vertices[3][2] - vertices[0][2]) - 
@@ -325,33 +378,28 @@ void drawModel3d(void) {
         continue;
       }
       
-      // Цвет в зависимости от напряжений (если есть)
+      // Цвет в зависимости от положения элемента и деформации
       double color[3] = {0.7, 0.8, 0.9};  // Голубоватый цвет
-      if (stress != NULL && stress[elem] != NULL) {
-        double maxStress = 0.0;
-        for (int i = 0; i < 6; i++) {
-          if (fabs(stress[elem][i]) > maxStress) {
-            maxStress = fabs(stress[elem][i]);
-          }
-        }
-        // Нормализуем цвет по напряжению
-        double normalizedStress = maxStress / 1000.0; // Масштабирование
-        if (normalizedStress > 1.0) normalizedStress = 1.0;
-        
-        if (showStress) {
-          color[0] = 0.5 + 0.5 * normalizedStress; // Красный
-          color[1] = 0.5 - 0.5 * normalizedStress; // Зеленый
-          color[2] = 0.5 - 0.5 * normalizedStress; // Синий
-        }
-      }
       
-      // Разные цвета для разных элементов
-      if (elem % 3 == 0) {
-        color[0] = 0.8; color[1] = 0.6; color[2] = 0.6; // Красноватый
-      } else if (elem % 3 == 1) {
-        color[0] = 0.6; color[1] = 0.8; color[2] = 0.6; // Зеленоватый
+      if (showStress && isAnimating) {
+        // Цвет зависит от деформации
+        float x = (vertices[0][0] + vertices[1][0] + vertices[2][0] + vertices[3][0]) / 4.0f;
+        float stressLevel = animationProgress * (x / 4.0f);  // Больше деформации дальше от закрепления
+        
+        color[0] = 0.5 + 0.5 * stressLevel; // Красный
+        color[1] = 0.5 - 0.3 * stressLevel; // Зеленый
+        color[2] = 0.5 - 0.5 * stressLevel; // Синий
       } else {
-        color[0] = 0.6; color[1] = 0.6; color[2] = 0.8; // Синеватый
+        // Разные цвета для разных элементов
+        if (elem % 4 == 0) {
+          color[0] = 0.8; color[1] = 0.6; color[2] = 0.6; // Красноватый
+        } else if (elem % 4 == 1) {
+          color[0] = 0.6; color[1] = 0.8; color[2] = 0.6; // Зеленоватый
+        } else if (elem % 4 == 2) {
+          color[0] = 0.6; color[1] = 0.6; color[2] = 0.8; // Синеватый
+        } else {
+          color[0] = 0.8; color[1] = 0.8; color[2] = 0.6; // Желтоватый
+        }
       }
       
       glColor3f(color[0], color[1], color[2]);
@@ -471,15 +519,25 @@ void drawModel3d(void) {
 
 void updateAnimation3d(int __attribute__((unused)) value) {
   if (isAnimating) {
-    animationProgress += 0.01f * animationDirection;
+    // Анимация деформации
+    animationProgress += 0.02f * animationDirection;
     if (animationProgress >= 1.0f) {
+      animationProgress = 1.0f;
       animationDirection = -1;
     } else if (animationProgress <= 0.0f) {
+      animationProgress = 0.0f;
       animationDirection = 1;
     }
+    
+    // Анимация нагрузки
+    loadAnimation += 0.05f;
+    if (loadAnimation > 2.0f * M_PI) {
+      loadAnimation = 0.0f;
+    }
+    
+    glutPostRedisplay();
   }
   
-  glutPostRedisplay();
   glutTimerFunc(50, updateAnimation3d, 0);
 }
 
@@ -554,6 +612,23 @@ void keyboard3d(unsigned char key, int __attribute__((unused)) x,
       isAnimating = !isAnimating;
       printf("Animation: %s\n", isAnimating ? "ON" : "OFF");
       break;
+    case 'l':
+    case 'L':
+      showLoad = !showLoad;
+      printf("Show load: %s\n", showLoad ? "ON" : "OFF");
+      break;
+    case '1':
+      deformationScale = 0.5f;
+      printf("Deformation scale: %.1f\n", deformationScale);
+      break;
+    case '2':
+      deformationScale = 1.0f;
+      printf("Deformation scale: %.1f\n", deformationScale);
+      break;
+    case '3':
+      deformationScale = 2.0f;
+      printf("Deformation scale: %.1f\n", deformationScale);
+      break;
     default:
       printf("Controls:\n");
       printf("  R - Reset view\n");
@@ -563,6 +638,8 @@ void keyboard3d(unsigned char key, int __attribute__((unused)) x,
       printf("  D - Toggle deformed view\n");
       printf("  V - Toggle value display\n");
       printf("  A - Toggle animation\n");
+      printf("  L - Toggle load display\n");
+      printf("  1/2/3 - Deformation scale (0.5/1.0/2.0)\n");
       printf("  Q/ESC - Quit\n");
       break;
   }
