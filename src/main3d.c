@@ -233,9 +233,9 @@ void display3d(void) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
   
-  // Настройка камеры
-  gluLookAt(3.0, 3.0, 3.0,  // позиция камеры
-            0.0, 0.0, 0.0,   // точка, на которую смотрит камера
+  // Улучшенная настройка камеры - отодвигаем камеру дальше
+  gluLookAt(5.0, 5.0, 5.0,  // позиция камеры (дальше от центра)
+            0.5, 0.5, 0.5,   // точка, на которую смотрит камера (центр куба)
             0.0, 1.0, 0.0);  // вектор "вверх"
   
   // Применение поворотов
@@ -255,6 +255,24 @@ void display3d(void) {
 
 void drawModel3d(void) {
   printf("drawModel3d called - nelem: %d, jt03: %p, car: %p\n", nelem, (void*)jt03, (void*)car);
+  
+  // Отрисовка осей координат для отладки
+  glDisable(GL_LIGHTING);
+  glBegin(GL_LINES);
+  // Ось X - красная
+  glColor3f(1.0, 0.0, 0.0);
+  glVertex3f(0.0, 0.0, 0.0);
+  glVertex3f(2.0, 0.0, 0.0);
+  // Ось Y - зеленая
+  glColor3f(0.0, 1.0, 0.0);
+  glVertex3f(0.0, 0.0, 0.0);
+  glVertex3f(0.0, 2.0, 0.0);
+  // Ось Z - синяя
+  glColor3f(0.0, 0.0, 1.0);
+  glVertex3f(0.0, 0.0, 0.0);
+  glVertex3f(0.0, 0.0, 2.0);
+  glEnd();
+  glEnable(GL_LIGHTING);
   
   // Отрисовка тетраэдров из файла данных
   if (jt03 != NULL && car != NULL && nelem > 0) {
@@ -297,7 +315,7 @@ void drawModel3d(void) {
                    vertices[2][0], vertices[2][1], vertices[2][2],
                    vertices[3][0], vertices[3][1], vertices[3][2]);
       
-      // Проверяем, что тетраэдр имеет ненулевой объем
+      // Проверяем, что тетраэдр имеет ненулевой объем (используем абсолютное значение)
       double detJ = (vertices[1][0] - vertices[0][0]) * 
                     ((vertices[2][1] - vertices[0][1]) * (vertices[3][2] - vertices[0][2]) - 
                      (vertices[2][2] - vertices[0][2]) * (vertices[3][1] - vertices[0][1])) -
@@ -308,8 +326,8 @@ void drawModel3d(void) {
                     ((vertices[2][0] - vertices[0][0]) * (vertices[3][1] - vertices[0][1]) - 
                      (vertices[2][1] - vertices[0][1]) * (vertices[3][0] - vertices[0][0]));
       
-      double V = detJ / 6.0;
-      if (fabs(V) < 1e-12) {
+      double V = fabs(detJ) / 6.0;  // Используем абсолютное значение
+      if (V < 1e-12) {
         printf("Skipping element %d - zero volume (V=%.2e)\n", elem, V);
         continue;
       }
@@ -372,12 +390,96 @@ void drawModel3d(void) {
       
       glEnd();
       
+      // Отрисовка ребер тетраэдра для лучшей видимости
+      glDisable(GL_LIGHTING);
+      glColor3f(0.0, 0.0, 0.0);
+      glBegin(GL_LINES);
+      
+      // Ребра тетраэдра
+      glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
+      glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
+      
+      glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
+      glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
+      
+      glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
+      glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
+      
+      glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
+      glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
+      
+      glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
+      glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
+      
+      glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
+      glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
+      
+      glEnd();
+      glEnable(GL_LIGHTING);
+      
       drawnElements++;
     }
     
     printf("Successfully drew %d elements\n", drawnElements);
   } else {
     printf("Cannot draw model: jt03=%p, car=%p, nelem=%d\n", (void*)jt03, (void*)car, nelem);
+    printf("Drawing fallback cube...\n");
+    
+    // Fallback: отрисовка простого куба
+    double vertices[8][3] = {
+      {-1.0, -1.0, -1.0},
+      {1.0, -1.0, -1.0},
+      {1.0, 1.0, -1.0},
+      {-1.0, 1.0, -1.0},
+      {-1.0, -1.0, 1.0},
+      {1.0, -1.0, 1.0},
+      {1.0, 1.0, 1.0},
+      {-1.0, 1.0, 1.0}
+    };
+    
+    double color[3] = {0.8, 0.8, 0.8};
+    
+    // Отрисовка куба
+    glColor3f(color[0], color[1], color[2]);
+    glBegin(GL_QUADS);
+    
+    // Передняя грань
+    glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
+    glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
+    glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
+    glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
+    
+    // Задняя грань
+    glVertex3f(vertices[4][0], vertices[4][1], vertices[4][2]);
+    glVertex3f(vertices[5][0], vertices[5][1], vertices[5][2]);
+    glVertex3f(vertices[6][0], vertices[6][1], vertices[6][2]);
+    glVertex3f(vertices[7][0], vertices[7][1], vertices[7][2]);
+    
+    // Левая грань
+    glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
+    glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
+    glVertex3f(vertices[7][0], vertices[7][1], vertices[7][2]);
+    glVertex3f(vertices[4][0], vertices[4][1], vertices[4][2]);
+    
+    // Правая грань
+    glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
+    glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
+    glVertex3f(vertices[6][0], vertices[6][1], vertices[6][2]);
+    glVertex3f(vertices[5][0], vertices[5][1], vertices[5][2]);
+    
+    // Верхняя грань
+    glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
+    glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
+    glVertex3f(vertices[6][0], vertices[6][1], vertices[6][2]);
+    glVertex3f(vertices[7][0], vertices[7][1], vertices[7][2]);
+    
+    // Нижняя грань
+    glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
+    glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
+    glVertex3f(vertices[5][0], vertices[5][1], vertices[5][2]);
+    glVertex3f(vertices[4][0], vertices[4][1], vertices[4][2]);
+    
+    glEnd();
   }
 }
 
@@ -398,45 +500,87 @@ void updateAnimation3d(int __attribute__((unused)) value) {
 void keyboard3d(unsigned char key, int __attribute__((unused)) x,
                 int __attribute__((unused)) y) {
   switch (key) {
-    case 'd':
-    case 'D':
-      showDeformed = !showDeformed;
+    case 'q':
+    case 'Q':
+    case 27:  // ESC
+      printf("Exiting...\n");
+      exit(0);
+      break;
+    case 'r':
+    case 'R':
+      rotationX = 0.0f;
+      rotationY = 0.0f;
+      rotationZ = 0.0f;
+      zoom = 1.0f;
+      printf("Reset view\n");
+      break;
+    case 'x':
+      rotationX += 10.0f;
+      printf("Rotate X: %.1f\n", rotationX);
+      break;
+    case 'X':
+      rotationX -= 10.0f;
+      printf("Rotate X: %.1f\n", rotationX);
+      break;
+    case 'y':
+      rotationY += 10.0f;
+      printf("Rotate Y: %.1f\n", rotationY);
+      break;
+    case 'Y':
+      rotationY -= 10.0f;
+      printf("Rotate Y: %.1f\n", rotationY);
+      break;
+    case 'z':
+      rotationZ += 10.0f;
+      printf("Rotate Z: %.1f\n", rotationZ);
+      break;
+    case 'Z':
+      rotationZ -= 10.0f;
+      printf("Rotate Z: %.1f\n", rotationZ);
+      break;
+    case '+':
+    case '=':
+      zoom *= 1.1f;
+      printf("Zoom: %.2f\n", zoom);
+      break;
+    case '-':
+    case '_':
+      zoom /= 1.1f;
+      printf("Zoom: %.2f\n", zoom);
       break;
     case 's':
     case 'S':
       showStress = !showStress;
+      printf("Show stress: %s\n", showStress ? "ON" : "OFF");
+      break;
+    case 'd':
+    case 'D':
+      showDeformed = !showDeformed;
+      printf("Show deformed: %s\n", showDeformed ? "ON" : "OFF");
       break;
     case 'v':
     case 'V':
       showValues = !showValues;
+      printf("Show values: %s\n", showValues ? "ON" : "OFF");
       break;
     case 'a':
     case 'A':
       isAnimating = !isAnimating;
+      printf("Animation: %s\n", isAnimating ? "ON" : "OFF");
       break;
-    case '+':
-    case '=':
-      zoom *= 1.1;
-      break;
-    case '-':
-      zoom /= 1.1;
-      break;
-    case 'x':
-    case 'X':
-      rotationX += 5.0f;
-      break;
-    case 'y':
-    case 'Y':
-      rotationY += 5.0f;
-      break;
-    case 'z':
-    case 'Z':
-      rotationZ += 5.0f;
-      break;
-    case 27:  // ESC
-      exit(0);
+    default:
+      printf("Controls:\n");
+      printf("  R - Reset view\n");
+      printf("  X/Y/Z - Rotate around X/Y/Z axis\n");
+      printf("  +/- - Zoom in/out\n");
+      printf("  S - Toggle stress visualization\n");
+      printf("  D - Toggle deformed view\n");
+      printf("  V - Toggle value display\n");
+      printf("  A - Toggle animation\n");
+      printf("  Q/ESC - Quit\n");
       break;
   }
+  
   glutPostRedisplay();
 }
 
