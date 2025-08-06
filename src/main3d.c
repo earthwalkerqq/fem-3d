@@ -254,12 +254,19 @@ void display3d(void) {
 }
 
 void drawModel3d(void) {
+  printf("drawModel3d called - nelem: %d, jt03: %p, car: %p\n", nelem, (void*)jt03, (void*)car);
+  
   // Отрисовка тетраэдров из файла данных
   if (jt03 != NULL && car != NULL && nelem > 0) {
+    printf("Starting to draw %d elements\n", nelem);
+    int drawnElements = 0;
+    
     for (int elem = 0; elem < nelem; elem++) {
       // Проверяем, что индексы узлов корректны
       if (jt03[elem][0] <= 0 || jt03[elem][1] <= 0 || 
           jt03[elem][2] <= 0 || jt03[elem][3] <= 0) {
+        printf("Skipping element %d - invalid node indices: %d %d %d %d\n", 
+               elem, jt03[elem][0], jt03[elem][1], jt03[elem][2], jt03[elem][3]);
         continue; // Пропускаем некорректные элементы
       }
       
@@ -272,6 +279,8 @@ void drawModel3d(void) {
       // Проверяем границы массива
       if (node1 < 0 || node2 < 0 || node3 < 0 || node4 < 0 ||
           node1 >= nys || node2 >= nys || node3 >= nys || node4 >= nys) {
+        printf("Skipping element %d - node indices out of bounds: %d %d %d %d (nys=%d)\n", 
+               elem, node1, node2, node3, node4, nys);
         continue; // Пропускаем элементы с некорректными индексами
       }
       
@@ -281,6 +290,12 @@ void drawModel3d(void) {
         {car[node3][0], car[node3][1], car[node3][2]},
         {car[node4][0], car[node4][1], car[node4][2]}
       };
+      
+      printf("Element %d vertices: (%.2f,%.2f,%.2f) (%.2f,%.2f,%.2f) (%.2f,%.2f,%.2f) (%.2f,%.2f,%.2f)\n",
+             elem, vertices[0][0], vertices[0][1], vertices[0][2],
+                   vertices[1][0], vertices[1][1], vertices[1][2],
+                   vertices[2][0], vertices[2][1], vertices[2][2],
+                   vertices[3][0], vertices[3][1], vertices[3][2]);
       
       // Проверяем, что тетраэдр имеет ненулевой объем
       double detJ = (vertices[1][0] - vertices[0][0]) * 
@@ -295,8 +310,11 @@ void drawModel3d(void) {
       
       double V = detJ / 6.0;
       if (fabs(V) < 1e-12) {
+        printf("Skipping element %d - zero volume (V=%.2e)\n", elem, V);
         continue;
       }
+      
+      printf("Drawing element %d with volume %.6f\n", elem, V);
       
       // Цвет в зависимости от напряжений (если есть)
       double color[3] = {0.7, 0.8, 0.9};  // Голубоватый цвет
@@ -354,89 +372,12 @@ void drawModel3d(void) {
       
       glEnd();
       
-      // Отрисовка ребер тетраэдра
-      if (showValues) {
-        glColor3f(0.0, 0.0, 0.0);
-        glBegin(GL_LINES);
-        
-        // Ребра тетраэдра
-        glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
-        glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
-        
-        glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
-        glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
-        
-        glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
-        glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
-        
-        glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
-        glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
-        
-        glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
-        glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
-        
-        glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
-        glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
-        
-        glEnd();
-      }
+      drawnElements++;
     }
+    
+    printf("Successfully drew %d elements\n", drawnElements);
   } else {
-    // Fallback: отрисовка простого куба
-    double vertices[8][3] = {
-      {-1.0, -1.0, -1.0},
-      {1.0, -1.0, -1.0},
-      {1.0, 1.0, -1.0},
-      {-1.0, 1.0, -1.0},
-      {-1.0, -1.0, 1.0},
-      {1.0, -1.0, 1.0},
-      {1.0, 1.0, 1.0},
-      {-1.0, 1.0, 1.0}
-    };
-    
-    double color[3] = {0.8, 0.8, 0.8};
-    
-    // Отрисовка куба
-    glColor3f(color[0], color[1], color[2]);
-    glBegin(GL_QUADS);
-    
-    // Передняя грань
-    glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
-    glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
-    glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
-    glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
-    
-    // Задняя грань
-    glVertex3f(vertices[4][0], vertices[4][1], vertices[4][2]);
-    glVertex3f(vertices[5][0], vertices[5][1], vertices[5][2]);
-    glVertex3f(vertices[6][0], vertices[6][1], vertices[6][2]);
-    glVertex3f(vertices[7][0], vertices[7][1], vertices[7][2]);
-    
-    // Левая грань
-    glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
-    glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
-    glVertex3f(vertices[7][0], vertices[7][1], vertices[7][2]);
-    glVertex3f(vertices[4][0], vertices[4][1], vertices[4][2]);
-    
-    // Правая грань
-    glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
-    glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
-    glVertex3f(vertices[6][0], vertices[6][1], vertices[6][2]);
-    glVertex3f(vertices[5][0], vertices[5][1], vertices[5][2]);
-    
-    // Верхняя грань
-    glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2]);
-    glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2]);
-    glVertex3f(vertices[6][0], vertices[6][1], vertices[6][2]);
-    glVertex3f(vertices[7][0], vertices[7][1], vertices[7][2]);
-    
-    // Нижняя грань
-    glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2]);
-    glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2]);
-    glVertex3f(vertices[5][0], vertices[5][1], vertices[5][2]);
-    glVertex3f(vertices[4][0], vertices[4][1], vertices[4][2]);
-    
-    glEnd();
+    printf("Cannot draw model: jt03=%p, car=%p, nelem=%d\n", (void*)jt03, (void*)car, nelem);
   }
 }
 
