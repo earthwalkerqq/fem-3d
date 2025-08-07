@@ -10,7 +10,7 @@ LIBS = -L../dependencies/glew/2.2.01/lib \
        -framework Cocoa \
        -lGLEW -lglfw -lm
 
-SOURCES = main3d.c fem3d.c formation_mtrx3d.c
+SOURCES = main.c fem3d.c formation_mtrx3d.c draw.c
 OBJECTS = $(SOURCES:.c=.o)
 TARGET = fem3d
 
@@ -23,6 +23,7 @@ $(TARGET): $(OBJECTS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)

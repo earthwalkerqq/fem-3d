@@ -6,17 +6,15 @@
 #include "formation_mtrx3d.h"
 
 // Функция освобождения памяти
-void free_memory3d(int count, ...) {
+void free_memory(int count, ...) {
   va_list args;
   va_start(args, count);
-  
   for (int i = 0; i < count; i++) {
     void *ptr = va_arg(args, void *);
     if (ptr != NULL) {
       free(ptr);
     }
   }
-  
   va_end(args);
 }
 

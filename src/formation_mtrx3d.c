@@ -451,27 +451,23 @@ void makeIntegerMtrx3d(int *dataMtrx, int ***mtrx, int row, int col) {
 // Чтение файла с данными
 short readFromFile3d(char *filename, int *nys, double **dataCar, double ***car,
                      int *nelem, int **data_jt03, int ***jt03) {
-  printf("Opening file: %s\n", filename);
   FILE *file = fopen(filename, "r");
   if (!file) {
-    printf("Error: Cannot open file %s\n", filename);
-    return 1;  // Ошибка открытия файла
+    perror("Error: Cannot open file\n");
+    return EXIT_FAILURE;
   }
   
-  // Читаем количество узлов
   if (fscanf(file, "%d", nys) != 1) {
-    printf("Error: Cannot read number of nodes\n");
+    perror("Error: Cannot read number of nodes\n");
     fclose(file);
-    return 2;  // Ошибка чтения количества узлов
+    return EXIT_FAILURE;  // Ошибка чтения количества узлов
   }
-  printf("Number of nodes: %d\n", *nys);
   
-  // Выделяем память для координат узлов
   *dataCar = (double *)calloc(*nys * 3, sizeof(double));
   if (*dataCar == NULL) {
-    printf("Error: Cannot allocate memory for node coordinates\n");
+    perror("Error: Cannot allocate memory for node coordinates\n");
     fclose(file);
-    return 3;  // Ошибка выделения памяти
+    return EXIT_FAILURE;
   }
   
   // Читаем координаты узлов

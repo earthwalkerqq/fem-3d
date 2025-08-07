@@ -53,6 +53,6 @@ void AssembleLocalStiffnessToGlobal3d(double **kglb, int **jt03, double **car,
                                       int nelem, double e, double puas);
 
 // Функции для работы с памятью
-void free_memory3d(int, ...);
+void free_memory(int, ...);
 
 #endif 
