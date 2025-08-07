@@ -36,11 +36,13 @@ void SetLoadVector3d(double *r, int lenNodePres, int *nodePres, int ndofysla,
                      int ndof, float load);
 
 // Создание матриц
-void makeDoubleMtrx3d(double *dataMtrx, double ***mtrx, int row, int col);
-void makeIntegerMtrx3d(int *dataMtrx, int ***mtrx, int row, int col);
+char makeDoubleMtrx(double *dataMtrx, double ***mtrx, int row, int col);
+char makeIntegerMtrx(int *dataMtrx, int ***mtrx, int row, int col);
+char makeDoubleArr(double** arr, int size);
+char mem_for_arrays(int size, int count_arrs, ...);
 
 // Чтение и запись файлов
-short readFromFile3d(char *filename, int *nys, double **dataCar, double ***car,
+char read_from_file(char *filename, int *nys, double **dataCar, double ***car,
                      int *nelem, int **data_jt03, int ***jt03);
 void writeResult3d(char *filename, double **strain, double **stress,
                    double *u, int nelem, int nys, int ndof);

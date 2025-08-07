@@ -13,6 +13,10 @@ double* u = NULL;
 double** stress = NULL;
 
 int main(int argc, char** argv) {
+  char error = EXIT_SUCCESS;
+
+  double* data_stress = NULL;
+  double* data_strain = NULL;
   double* dataCar = NULL;
   int* data_jt03 = NULL;
   double* dataKGLB = NULL;
@@ -21,82 +25,54 @@ int main(int argc, char** argv) {
   double* x = NULL;
   double** strain = NULL;
 
-  short fileErr = readFromFile3d("../nodes/beam3d.txt", &nys, &dataCar, &car,
+  error += read_from_file("../nodes/beam3d.txt", &nys, &dataCar, &car,
                                  &nelem, &data_jt03, &jt03);
 
-  if (fileErr != 0) {
+  if (error) {
     perror("Error: Failed to read file\n");
-    return EXIT_FAILURE;
-  } else if (nys <= 0 || nelem <= 0) {
-    perror("Error: Invalid data\n");
-    return EXIT_FAILURE;
-  } else if (car == NULL || jt03 == NULL) {
-    perror("Error: NULL pointers after file read\n");
-    return EXIT_FAILURE;
+    return error;
   }
 
-  int ndofysla = 3;           // кол-во степеней свободы одного узла (x, y, z)
+  int ndofysla = 3;           // кол-во степеней свободы одного узла
   int ndof = nys * ndofysla;  // общее кол-во степеней свободы
 
-  u = (double*)calloc(ndof, sizeof(double));
-  if (u == NULL) {
-    perror("Error: Failed to allocate memory for u\n");
+  error += mem_for_arrays(ndof, 4, &u, &r, &x, &dataKGLB);
+
+  error += makeDoubleMtrx(dataKGLB, &kglb, ndof, ndof);
+  if (error) {
+    free_memory(4, u, r, x, dataKGLB);
+    return error;
+  }
+
+  error += makeDoubleArr(&data_stress, nelem * 6);
+  if (error) {
+    free_memory(4, u, r, x, dataKGLB);
+    perror("CAN'T MEMORY ALLOCATE");
     return EXIT_FAILURE;
   }
-
-  r = (double*)calloc(ndof, sizeof(double));
-  if (r == NULL) {
-    perror("Error: Failed to allocate memory for r\n");
-    free(u);
+  error += makeDoubleArr(&data_strain, nelem * 6);
+  if (error) {
+    free_memory(5, u, r, x, dataKGLB, data_stress);
+    perror("CAN'T MEMORY ALLOCATE");
     return EXIT_FAILURE;
   }
-
-  x = (double*)calloc(ndof, sizeof(double));
-  if (x == NULL) {
-    perror("Error: Failed to allocate memory for x\n");
-    free_memory(2, u, r);
+  error += makeDoubleMtrx(data_stress, &stress, nelem, 6);
+  if (error) {
+    free_memory(6, u, r, x, dataKGLB, data_stress, data_strain);
+    perror("CAN'T MEMORY ALLOCATE");
     return EXIT_FAILURE;
   }
-
-  dataKGLB = (double*)calloc(ndof * ndof, sizeof(double));
-  if (dataKGLB == NULL) {
-    perror("Error: Failed to allocate memory for dataKGLB\n");
-    free_memory(3, u, r, x);
+  error += makeDoubleMtrx(data_strain, &strain, nelem, 6);
+  if (error) {
+    free_memory(7, u, r, x, dataKGLB, data_stress, data_strain, stress);
+    perror("CAN'T MEMORY ALLOCATE");
     return EXIT_FAILURE;
   }
-
-  kglb = (double**)calloc(ndof, sizeof(double*));
-  if (kglb == NULL) {
-    perror("Error: Failed to allocate memory for kglb\n");
-    free_memory(4, dataKGLB, u, r, x);
-    return EXIT_FAILURE;
-  }
-
-  for (int i = 0; i < ndof; i++) {
-    kglb[i] = dataKGLB + i * ndof;
-  }
-
   stress = (double**)calloc(nelem, sizeof(double*));
   if (stress == NULL) {
     perror("Error: Failed to allocate memory for stress\n");
     free_memory(5, dataKGLB, kglb, u, r, x);
     return EXIT_FAILURE;
-  }
-
-  strain = (double**)calloc(nelem, sizeof(double*));
-  if (strain == NULL) {
-    perror("Error: Failed to allocate memory for strain\n");
-    free_memory(6, stress, dataKGLB, kglb, u, r, x);
-    return EXIT_FAILURE;
-  }
-
-  for (int i = 0; i < nelem; i++) {
-    stress[i] = (double*)calloc(6, sizeof(double));
-    strain[i] = (double*)calloc(6, sizeof(double));
-    if (stress[i] == NULL || strain[i] == NULL) {
-      perror("Error: Failed to allocate memory for stress/strain\n");
-      return EXIT_FAILURE;
-    }
   }
 
   drawMashForSolve3d(argc, argv);

@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include "formation_mtrx3d.h"
 
 // Формирование матрицы деформаций для тетраэдра
@@ -193,7 +194,6 @@ void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d 
     }
   }
   
-  printf("  Forming elasticity matrix...\n");
   formationElastMtrx3d(elastMtrx, e, puas);
   
   // Вычисляем объем тетраэдра
@@ -244,7 +244,6 @@ void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d 
     }
   }
   
-  printf("  Computing D * B...\n");
   // temp1 = D * B
   for (int i = 0; i < 6; i++) {
     for (int j = 0; j < 12; j++) {
@@ -255,7 +254,6 @@ void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d 
     }
   }
   
-  printf("  Computing B^T * temp1 * V...\n");
   // gest = B^T * temp1 * V
   for (int i = 0; i < 12; i++) {
     for (int j = 0; j < 12; j++) {
@@ -266,18 +264,9 @@ void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d 
     }
   }
   
-  printf("  Cleaning up memory...\n");
-  // Освобождаем память
-  for (int i = 0; i < 6; i++) {
-    free(deformMtrx[i]);
-    free(elastMtrx[i]);
-    free(temp1[i]);
-  }
-  free(deformMtrx);
-  free(elastMtrx);
-  free(temp1);
-  
-  printf("  tetrahedronElement completed.\n");
+  for (int i = 0; i < 6; i++)
+    free_memory(3, deformMtrx[i], elastMtrx[i], temp1[i]);
+  free_memory(3, deformMtrx, elastMtrx, temp1);
 }
 
 // Сборка локальной матрицы в глобальную
@@ -413,8 +402,6 @@ void MakeConstrained3d(int *nodeZakr, int lenNodeZakr, double **kglb, int ndofys
       kglb[dofIndex][dofIndex] = 1.0;  // Единица на диагонали
     }
   }
-  
-  printf("  Constraints applied successfully\n");
 }
 
 // Задание вектора нагрузок
@@ -433,113 +420,129 @@ void SetLoadVector3d(double *r, int lenNodePres, int *nodePres, int ndofysla,
   }
 }
 
-// Создание матриц
-void makeDoubleMtrx3d(double *dataMtrx, double ***mtrx, int row, int col) {
+char makeDoubleMtrx(double *dataMtrx, double ***mtrx, int row, int col) {
+  char error = EXIT_SUCCESS;
   *mtrx = (double **)calloc(row, sizeof(double *));
-  for (int i = 0; i < row; i++) {
+  if (*mtrx == NULL) {
+    perror("CAN'T MEMORY ALOCATE");
+    error = EXIT_FAILURE;
+  }
+  for (int i = 0; i < row && !error; i++) {
     (*mtrx)[i] = dataMtrx + i * col;
   }
+  return error;
 }
 
-void makeIntegerMtrx3d(int *dataMtrx, int ***mtrx, int row, int col) {
+char makeIntegerMtrx(int *dataMtrx, int ***mtrx, int row, int col) {
+  char error = EXIT_SUCCESS;
   *mtrx = (int **)calloc(row, sizeof(int *));
-  for (int i = 0; i < row; i++) {
+  if (*mtrx == NULL) {
+    perror("CAN'T MEMORY ALOCATE");
+    error = EXIT_FAILURE;
+  }
+  for (int i = 0; i < row && !error; i++) {
     (*mtrx)[i] = dataMtrx + i * col;
   }
+  return error;
 }
 
-// Чтение файла с данными
-short readFromFile3d(char *filename, int *nys, double **dataCar, double ***car,
+char makeDoubleArr(double** arr, int size) {
+  char error = EXIT_SUCCESS;
+  *arr = (double*)calloc(size, sizeof(double));
+  if (*arr == NULL) {
+    perror("CAN'T MEMORY ALLOCATE");
+    error = EXIT_FAILURE;
+  }
+  return error;
+}
+
+char mem_for_arrays(int size, int count_arrs, ...) {
+  char error = EXIT_SUCCESS;
+  va_list arrs;
+  va_start(arrs, count_arrs);
+  double*** arrs_list = (double***)calloc(count_arrs, sizeof(double **));
+  int i;
+  for (i = 0; i < count_arrs && !error; i++) {
+    arrs_list[i] = va_arg(arrs, double**);
+    error += makeDoubleArr(arrs_list[i], size);
+  }
+  if (error) {
+    for (int j = 0; j < i; j++) {
+      free(arrs_list[j]);
+    }
+  }
+  va_end(arrs);
+  free(arrs_list);
+  return error;
+}
+
+char read_from_file(char *filename, int *nys, double **dataCar, double ***car,
                      int *nelem, int **data_jt03, int ***jt03) {
+  char error = EXIT_SUCCESS;
   FILE *file = fopen(filename, "r");
   if (!file) {
     perror("Error: Cannot open file\n");
-    return EXIT_FAILURE;
-  }
-  
-  if (fscanf(file, "%d", nys) != 1) {
-    perror("Error: Cannot read number of nodes\n");
+    error = EXIT_FAILURE;
+  } else if (fscanf(file, "%d", nys) != 1 || *nys <= 0) {
+    perror("Error: Cannot read number of nodes or invalid data\n");
     fclose(file);
-    return EXIT_FAILURE;  // Ошибка чтения количества узлов
+    error = EXIT_FAILURE;
   }
-  
-  *dataCar = (double *)calloc(*nys * 3, sizeof(double));
-  if (*dataCar == NULL) {
-    perror("Error: Cannot allocate memory for node coordinates\n");
-    fclose(file);
-    return EXIT_FAILURE;
-  }
-  
-  // Читаем координаты узлов
-  for (int i = 0; i < *nys; i++) {
-    if (fscanf(file, "%lf %lf %lf", 
-               &(*dataCar)[i * 3], 
-               &(*dataCar)[i * 3 + 1], 
-               &(*dataCar)[i * 3 + 2]) != 3) {
-      printf("Error: Cannot read coordinates for node %d\n", i + 1);
-      free(*dataCar);
+
+  if (!error) {
+    *dataCar = (double *)calloc(*nys * 3, sizeof(double));
+    if (*dataCar == NULL) {
+      perror("Error: Cannot allocate memory for node coordinates\n");
       fclose(file);
-      return 2;
+      return EXIT_FAILURE;
     }
-    printf("Node %d: (%.2f, %.2f, %.2f)\n", i + 1, 
-           (*dataCar)[i * 3], (*dataCar)[i * 3 + 1], (*dataCar)[i * 3 + 2]);
-  }
-  
-  // Читаем количество элементов
-  if (fscanf(file, "%d", nelem) != 1) {
-    printf("Error: Cannot read number of elements\n");
-    free(*dataCar);
-    fclose(file);
-    return 2;
-  }
-  printf("Number of elements: %d\n", *nelem);
-  
-  // Выделяем память для номеров узлов элементов
-  *data_jt03 = (int *)calloc(*nelem * 4, sizeof(int));
-  if (*data_jt03 == NULL) {
-    printf("Error: Cannot allocate memory for element nodes\n");
-    free(*dataCar);
-    fclose(file);
-    return 3;
-  }
-  
-  // Читаем номера узлов элементов
-  for (int i = 0; i < *nelem; i++) {
-    if (fscanf(file, "%d %d %d %d", 
-               &(*data_jt03)[i * 4], 
-               &(*data_jt03)[i * 4 + 1], 
-               &(*data_jt03)[i * 4 + 2], 
-               &(*data_jt03)[i * 4 + 3]) != 4) {
-      printf("Error: Cannot read element %d\n", i + 1);
-      free(*dataCar);
-      free(*data_jt03);
-      fclose(file);
-      return 2;
-    }
-    printf("Element %d: nodes %d, %d, %d, %d\n", i + 1,
-           (*data_jt03)[i * 4], (*data_jt03)[i * 4 + 1], 
-           (*data_jt03)[i * 4 + 2], (*data_jt03)[i * 4 + 3]);
-    
-    // Проверяем корректность индексов
-    for (int j = 0; j < 4; j++) {
-      int nodeIndex = (*data_jt03)[i * 4 + j];
-      if (nodeIndex < 1 || nodeIndex > *nys) {
-        printf("Error: Invalid node index %d in element %d\n", nodeIndex, i + 1);
+
+    for (int i = 0; i < *nys && !error; i++) {
+      if (fscanf(file, "%lf%lf%lf", 
+                &(*dataCar)[i * 3], 
+                &(*dataCar)[i * 3 + 1], 
+                &(*dataCar)[i * 3 + 2]) != 3) {
+        perror("Error: Cannot read coordinates for node\n");
         free(*dataCar);
-        free(*data_jt03);
         fclose(file);
-        return 2;
+        error = EXIT_FAILURE;
       }
     }
+    if (fscanf(file, "%d", nelem) != 1 || *nelem <= 0) {
+      perror("Error: Cannot read number of elements or invalid data\n");
+      free(*dataCar);
+      fclose(file);
+      error = EXIT_FAILURE;
+    }
+    if (error) return error;
+    *data_jt03 = (int *)calloc(*nelem * 4, sizeof(int));
+    if (*data_jt03 == NULL) {
+      perror("Error: Cannot allocate memory for element nodes\n");
+      free(*dataCar);
+      fclose(file);
+      return EXIT_FAILURE;
+    }
+    
+    for (int i = 0; i < *nelem && !error; i++) {
+      for (int j = 0; j < 4 && !error; j++) {
+        if (fscanf(file, "%d", &(*data_jt03)[i * 4 + j]) != 1) error = EXIT_FAILURE;
+        else if ((*data_jt03)[i * 4 + j] < 1 || (*data_jt03)[i * 4 + j] > *nys) error = EXIT_FAILURE;
+      }
+      if (error) {
+        perror("Error: Cannot read element or uncorrect node index\n");
+        free_memory(2, *data_jt03, *dataCar);
+        fclose(file);
+      }
+    }
+    
+    if (!error) {
+      error += makeDoubleMtrx(*dataCar, car, *nys, 3);
+      error += makeIntegerMtrx(*data_jt03, jt03, *nelem, 4);
+    }
+    
+    fclose(file);
   }
-  
-  // Создаем матрицы
-  makeDoubleMtrx3d(*dataCar, car, *nys, 3);
-  makeIntegerMtrx3d(*data_jt03, jt03, *nelem, 4);
-  
-  fclose(file);
-  printf("File read successfully\n");
-  return 0;  // Успешно
+  return error;
 }
 
 // Запись результатов
