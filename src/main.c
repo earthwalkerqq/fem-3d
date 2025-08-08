@@ -25,8 +25,8 @@ int main(int argc, char** argv) {
   double* x = NULL;
   double** strain = NULL;
 
-  error += read_from_file("../nodes/beam3d.txt", &nys, &dataCar, &car,
-                                 &nelem, &data_jt03, &jt03);
+  error += read_from_file("../nodes/beam3d.txt", &nys, &dataCar, &car, &nelem,
+                          &data_jt03, &jt03);
 
   if (error) {
     perror("Error: Failed to read file\n");
@@ -37,8 +37,8 @@ int main(int argc, char** argv) {
   int ndof = nys * ndofysla;  // общее кол-во степеней свободы
 
   error += mem_for_arrays(ndof, 4, &u, &r, &x, &dataKGLB);
-
   error += makeDoubleMtrx(dataKGLB, &kglb, ndof, ndof);
+
   if (error) {
     free_memory(4, u, r, x, dataKGLB);
     return error;
@@ -66,12 +66,6 @@ int main(int argc, char** argv) {
   if (error) {
     free_memory(7, u, r, x, dataKGLB, data_stress, data_strain, stress);
     perror("CAN'T MEMORY ALLOCATE");
-    return EXIT_FAILURE;
-  }
-  stress = (double**)calloc(nelem, sizeof(double*));
-  if (stress == NULL) {
-    perror("Error: Failed to allocate memory for stress\n");
-    free_memory(5, dataKGLB, kglb, u, r, x);
     return EXIT_FAILURE;
   }
 

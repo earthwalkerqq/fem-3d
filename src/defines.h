@@ -11,8 +11,7 @@
 #include "fem3d.h"
 #include "formation_mtrx3d.h"
 
-
-#define LOAD 25000.                 // Приложенная нагрузка
+#define LOAD 25000.  // Приложенная нагрузка
 #define FLT_MAX 100.
 #define KOEF_X 25.
 #define KOEF_Y 14.

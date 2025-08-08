@@ -28,8 +28,13 @@ $(TARGET): $(OBJECTS)
 clean:
 	rm -f $(OBJECTS) $(TARGET)
 
+style_check:
+	cp ../materials/linters/.clang-format ./.clang-format
+	clang-format -i *.c *.h
+	rm -rf ./.clang-format
+
 run: $(TARGET)
 	./$(TARGET)
 
 debug: CFLAGS += -DDEBUG
-debug: $(TARGET) 
+debug: $(TARGET)

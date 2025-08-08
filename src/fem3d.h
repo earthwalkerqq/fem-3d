@@ -38,21 +38,22 @@ typedef struct {
 } stressComp3d;
 
 // Функции для решения системы уравнений
-bool matrLDLT3d(int ndof, double **kglb);
-void direktLDLT3d(int ndof, double **kglb, double *x, double *r);
-bool diagLDLT3d(int ndof, double **kglb, double *x);
-void rechLDLT3d(int ndof, double **kglb, double *u, double *x);
-bool solveLinearSystemLDLT3d(double **kglb, double *u, double *r, double *x, int ndof);
+bool matrLDLT3d(int ndof, double** kglb);
+void direktLDLT3d(int ndof, double** kglb, double* x, double* r);
+bool diagLDLT3d(int ndof, double** kglb, double* x);
+void rechLDLT3d(int ndof, double** kglb, double* u, double* x);
+bool solveLinearSystemLDLT3d(double** kglb, double* u, double* r, double* x,
+                             int ndof);
 
 // Функции для расчета напряжений и деформаций
-void stressModel3d(int nelem, int **jt03, double **car, double e,
-                   double puas, double *u, double **strain, double **stress);
+void stressModel3d(int nelem, int** jt03, double** car, double e, double puas,
+                   double* u, double** strain, double** stress);
 
 // Функции для сборки глобальной матрицы жесткости
-void AssembleLocalStiffnessToGlobal3d(double **kglb, int **jt03, double **car,
+void AssembleLocalStiffnessToGlobal3d(double** kglb, int** jt03, double** car,
                                       int nelem, double e, double puas);
 
 // Функции для работы с памятью
 void free_memory(int, ...);
 
-#endif 
+#endif

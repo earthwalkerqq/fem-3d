@@ -1,95 +1,156 @@
+#include "formation_mtrx3d.h"
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include "formation_mtrx3d.h"
 
 // Формирование матрицы деформаций для тетраэдра
-double **formationDeformMtrx3d(double **deformMtrx, coord3d coord1, coord3d coord2,
-                                coord3d coord3, coord3d coord4) {
-  
+double** formationDeformMtrx3d(double** deformMtrx, coord3d coord1,
+                               coord3d coord2, coord3d coord3, coord3d coord4) {
+
   // Вычисляем объем тетраэдра
-  double detJ = (coord2.x - coord1.x) * ((coord3.y - coord1.y) * (coord4.z - coord1.z) - 
-                                          (coord3.z - coord1.z) * (coord4.y - coord1.y)) -
-                 (coord2.y - coord1.y) * ((coord3.x - coord1.x) * (coord4.z - coord1.z) - 
-                                          (coord3.z - coord1.z) * (coord4.x - coord1.x)) +
-                 (coord2.z - coord1.z) * ((coord3.x - coord1.x) * (coord4.y - coord1.y) - 
-                                          (coord3.y - coord1.y) * (coord4.x - coord1.x));
-  
+  double detJ =
+      (coord2.x - coord1.x) * ((coord3.y - coord1.y) * (coord4.z - coord1.z) -
+                               (coord3.z - coord1.z) * (coord4.y - coord1.y)) -
+      (coord2.y - coord1.y) * ((coord3.x - coord1.x) * (coord4.z - coord1.z) -
+                               (coord3.z - coord1.z) * (coord4.x - coord1.x)) +
+      (coord2.z - coord1.z) * ((coord3.x - coord1.x) * (coord4.y - coord1.y) -
+                               (coord3.y - coord1.y) * (coord4.x - coord1.x));
+
   double V = detJ / 6.0;
-  
+
   // Вычисляем производные функций формы
-  double b1 = ((coord3.y - coord1.y) * (coord4.z - coord1.z) - 
-                (coord3.z - coord1.z) * (coord4.y - coord1.y)) / (6.0 * V);
-  double b2 = ((coord1.y - coord2.y) * (coord4.z - coord1.z) - 
-                (coord1.z - coord2.z) * (coord4.y - coord1.y)) / (6.0 * V);
-  double b3 = ((coord2.y - coord1.y) * (coord3.z - coord1.z) - 
-                (coord2.z - coord1.z) * (coord3.y - coord1.y)) / (6.0 * V);
-  double b4 = ((coord1.y - coord3.y) * (coord2.z - coord1.z) - 
-                (coord1.z - coord3.z) * (coord2.y - coord1.y)) / (6.0 * V);
-  
-  double c1 = ((coord3.z - coord1.z) * (coord4.x - coord1.x) - 
-                (coord3.x - coord1.x) * (coord4.z - coord1.z)) / (6.0 * V);
-  double c2 = ((coord1.z - coord2.z) * (coord4.x - coord1.x) - 
-                (coord1.x - coord2.x) * (coord4.z - coord1.z)) / (6.0 * V);
-  double c3 = ((coord2.z - coord1.z) * (coord3.x - coord1.x) - 
-                (coord2.x - coord1.x) * (coord3.z - coord1.z)) / (6.0 * V);
-  double c4 = ((coord1.z - coord3.z) * (coord2.x - coord1.x) - 
-                (coord1.x - coord3.x) * (coord2.z - coord1.z)) / (6.0 * V);
-  
-  double d1 = ((coord3.x - coord1.x) * (coord4.y - coord1.y) - 
-                (coord3.y - coord1.y) * (coord4.x - coord1.x)) / (6.0 * V);
-  double d2 = ((coord1.x - coord2.x) * (coord4.y - coord1.y) - 
-                (coord1.y - coord2.y) * (coord4.x - coord1.x)) / (6.0 * V);
-  double d3 = ((coord2.x - coord1.x) * (coord3.y - coord1.y) - 
-                (coord2.y - coord1.y) * (coord3.x - coord1.x)) / (6.0 * V);
-  double d4 = ((coord1.x - coord3.x) * (coord2.y - coord1.y) - 
-                (coord1.y - coord3.y) * (coord2.x - coord1.x)) / (6.0 * V);
-  
+  double b1 = ((coord3.y - coord1.y) * (coord4.z - coord1.z) -
+               (coord3.z - coord1.z) * (coord4.y - coord1.y)) /
+              (6.0 * V);
+  double b2 = ((coord1.y - coord2.y) * (coord4.z - coord1.z) -
+               (coord1.z - coord2.z) * (coord4.y - coord1.y)) /
+              (6.0 * V);
+  double b3 = ((coord2.y - coord1.y) * (coord3.z - coord1.z) -
+               (coord2.z - coord1.z) * (coord3.y - coord1.y)) /
+              (6.0 * V);
+  double b4 = ((coord1.y - coord3.y) * (coord2.z - coord1.z) -
+               (coord1.z - coord3.z) * (coord2.y - coord1.y)) /
+              (6.0 * V);
+
+  double c1 = ((coord3.z - coord1.z) * (coord4.x - coord1.x) -
+               (coord3.x - coord1.x) * (coord4.z - coord1.z)) /
+              (6.0 * V);
+  double c2 = ((coord1.z - coord2.z) * (coord4.x - coord1.x) -
+               (coord1.x - coord2.x) * (coord4.z - coord1.z)) /
+              (6.0 * V);
+  double c3 = ((coord2.z - coord1.z) * (coord3.x - coord1.x) -
+               (coord2.x - coord1.x) * (coord3.z - coord1.z)) /
+              (6.0 * V);
+  double c4 = ((coord1.z - coord3.z) * (coord2.x - coord1.x) -
+               (coord1.x - coord3.x) * (coord2.z - coord1.z)) /
+              (6.0 * V);
+
+  double d1 = ((coord3.x - coord1.x) * (coord4.y - coord1.y) -
+               (coord3.y - coord1.y) * (coord4.x - coord1.x)) /
+              (6.0 * V);
+  double d2 = ((coord1.x - coord2.x) * (coord4.y - coord1.y) -
+               (coord1.y - coord2.y) * (coord4.x - coord1.x)) /
+              (6.0 * V);
+  double d3 = ((coord2.x - coord1.x) * (coord3.y - coord1.y) -
+               (coord2.y - coord1.y) * (coord3.x - coord1.x)) /
+              (6.0 * V);
+  double d4 = ((coord1.x - coord3.x) * (coord2.y - coord1.y) -
+               (coord1.y - coord3.y) * (coord2.x - coord1.x)) /
+              (6.0 * V);
+
   // Заполняем матрицу деформаций
   // Для каждого узла: [dN/dx, 0, 0, dN/dy, 0, dN/dz]
   //                    [0, dN/dy, 0, dN/dx, dN/dz, 0]
   //                    [0, 0, dN/dz, 0, dN/dy, dN/dx]
-  
+
   // Узел 1
-  deformMtrx[0][0] = b1; deformMtrx[0][1] = 0; deformMtrx[0][2] = 0;
-  deformMtrx[1][0] = 0; deformMtrx[1][1] = c1; deformMtrx[1][2] = 0;
-  deformMtrx[2][0] = 0; deformMtrx[2][1] = 0; deformMtrx[2][2] = d1;
-  deformMtrx[3][0] = c1; deformMtrx[3][1] = b1; deformMtrx[3][2] = 0;
-  deformMtrx[4][0] = d1; deformMtrx[4][1] = 0; deformMtrx[4][2] = b1;
-  deformMtrx[5][0] = 0; deformMtrx[5][1] = d1; deformMtrx[5][2] = c1;
-  
+  deformMtrx[0][0] = b1;
+  deformMtrx[0][1] = 0;
+  deformMtrx[0][2] = 0;
+  deformMtrx[1][0] = 0;
+  deformMtrx[1][1] = c1;
+  deformMtrx[1][2] = 0;
+  deformMtrx[2][0] = 0;
+  deformMtrx[2][1] = 0;
+  deformMtrx[2][2] = d1;
+  deformMtrx[3][0] = c1;
+  deformMtrx[3][1] = b1;
+  deformMtrx[3][2] = 0;
+  deformMtrx[4][0] = d1;
+  deformMtrx[4][1] = 0;
+  deformMtrx[4][2] = b1;
+  deformMtrx[5][0] = 0;
+  deformMtrx[5][1] = d1;
+  deformMtrx[5][2] = c1;
+
   // Узел 2
-  deformMtrx[0][3] = b2; deformMtrx[0][4] = 0; deformMtrx[0][5] = 0;
-  deformMtrx[1][3] = 0; deformMtrx[1][4] = c2; deformMtrx[1][5] = 0;
-  deformMtrx[2][3] = 0; deformMtrx[2][4] = 0; deformMtrx[2][5] = d2;
-  deformMtrx[3][3] = c2; deformMtrx[3][4] = b2; deformMtrx[3][5] = 0;
-  deformMtrx[4][3] = d2; deformMtrx[4][4] = 0; deformMtrx[4][5] = b2;
-  deformMtrx[5][3] = 0; deformMtrx[5][4] = d2; deformMtrx[5][5] = c2;
-  
+  deformMtrx[0][3] = b2;
+  deformMtrx[0][4] = 0;
+  deformMtrx[0][5] = 0;
+  deformMtrx[1][3] = 0;
+  deformMtrx[1][4] = c2;
+  deformMtrx[1][5] = 0;
+  deformMtrx[2][3] = 0;
+  deformMtrx[2][4] = 0;
+  deformMtrx[2][5] = d2;
+  deformMtrx[3][3] = c2;
+  deformMtrx[3][4] = b2;
+  deformMtrx[3][5] = 0;
+  deformMtrx[4][3] = d2;
+  deformMtrx[4][4] = 0;
+  deformMtrx[4][5] = b2;
+  deformMtrx[5][3] = 0;
+  deformMtrx[5][4] = d2;
+  deformMtrx[5][5] = c2;
+
   // Узел 3
-  deformMtrx[0][6] = b3; deformMtrx[0][7] = 0; deformMtrx[0][8] = 0;
-  deformMtrx[1][6] = 0; deformMtrx[1][7] = c3; deformMtrx[1][8] = 0;
-  deformMtrx[2][6] = 0; deformMtrx[2][7] = 0; deformMtrx[2][8] = d3;
-  deformMtrx[3][6] = c3; deformMtrx[3][7] = b3; deformMtrx[3][8] = 0;
-  deformMtrx[4][6] = d3; deformMtrx[4][7] = 0; deformMtrx[4][8] = b3;
-  deformMtrx[5][6] = 0; deformMtrx[5][7] = d3; deformMtrx[5][8] = c3;
-  
+  deformMtrx[0][6] = b3;
+  deformMtrx[0][7] = 0;
+  deformMtrx[0][8] = 0;
+  deformMtrx[1][6] = 0;
+  deformMtrx[1][7] = c3;
+  deformMtrx[1][8] = 0;
+  deformMtrx[2][6] = 0;
+  deformMtrx[2][7] = 0;
+  deformMtrx[2][8] = d3;
+  deformMtrx[3][6] = c3;
+  deformMtrx[3][7] = b3;
+  deformMtrx[3][8] = 0;
+  deformMtrx[4][6] = d3;
+  deformMtrx[4][7] = 0;
+  deformMtrx[4][8] = b3;
+  deformMtrx[5][6] = 0;
+  deformMtrx[5][7] = d3;
+  deformMtrx[5][8] = c3;
+
   // Узел 4
-  deformMtrx[0][9] = b4; deformMtrx[0][10] = 0; deformMtrx[0][11] = 0;
-  deformMtrx[1][9] = 0; deformMtrx[1][10] = c4; deformMtrx[1][11] = 0;
-  deformMtrx[2][9] = 0; deformMtrx[2][10] = 0; deformMtrx[2][11] = d4;
-  deformMtrx[3][9] = c4; deformMtrx[3][10] = b4; deformMtrx[3][11] = 0;
-  deformMtrx[4][9] = d4; deformMtrx[4][10] = 0; deformMtrx[4][11] = b4;
-  deformMtrx[5][9] = 0; deformMtrx[5][10] = d4; deformMtrx[5][11] = c4;
-  
+  deformMtrx[0][9] = b4;
+  deformMtrx[0][10] = 0;
+  deformMtrx[0][11] = 0;
+  deformMtrx[1][9] = 0;
+  deformMtrx[1][10] = c4;
+  deformMtrx[1][11] = 0;
+  deformMtrx[2][9] = 0;
+  deformMtrx[2][10] = 0;
+  deformMtrx[2][11] = d4;
+  deformMtrx[3][9] = c4;
+  deformMtrx[3][10] = b4;
+  deformMtrx[3][11] = 0;
+  deformMtrx[4][9] = d4;
+  deformMtrx[4][10] = 0;
+  deformMtrx[4][11] = b4;
+  deformMtrx[5][9] = 0;
+  deformMtrx[5][10] = d4;
+  deformMtrx[5][11] = c4;
+
   return deformMtrx;
 }
 
 // Формирование матрицы упругости для 3D
-double **formationElastMtrx3d(double **elastMtrx, double e, double puas) {
+double** formationElastMtrx3d(double** elastMtrx, double e, double puas) {
   double factor = e / ((1.0 + puas) * (1.0 - 2.0 * puas));
-  
+
   // Заполняем матрицу упругости для изотропного материала
   elastMtrx[0][0] = factor * (1.0 - puas);
   elastMtrx[0][1] = factor * puas;
@@ -97,60 +158,60 @@ double **formationElastMtrx3d(double **elastMtrx, double e, double puas) {
   elastMtrx[0][3] = 0.0;
   elastMtrx[0][4] = 0.0;
   elastMtrx[0][5] = 0.0;
-  
+
   elastMtrx[1][0] = factor * puas;
   elastMtrx[1][1] = factor * (1.0 - puas);
   elastMtrx[1][2] = factor * puas;
   elastMtrx[1][3] = 0.0;
   elastMtrx[1][4] = 0.0;
   elastMtrx[1][5] = 0.0;
-  
+
   elastMtrx[2][0] = factor * puas;
   elastMtrx[2][1] = factor * puas;
   elastMtrx[2][2] = factor * (1.0 - puas);
   elastMtrx[2][3] = 0.0;
   elastMtrx[2][4] = 0.0;
   elastMtrx[2][5] = 0.0;
-  
+
   elastMtrx[3][0] = 0.0;
   elastMtrx[3][1] = 0.0;
   elastMtrx[3][2] = 0.0;
   elastMtrx[3][3] = factor * (1.0 - 2.0 * puas) / 2.0;
   elastMtrx[3][4] = 0.0;
   elastMtrx[3][5] = 0.0;
-  
+
   elastMtrx[4][0] = 0.0;
   elastMtrx[4][1] = 0.0;
   elastMtrx[4][2] = 0.0;
   elastMtrx[4][3] = 0.0;
   elastMtrx[4][4] = factor * (1.0 - 2.0 * puas) / 2.0;
   elastMtrx[4][5] = 0.0;
-  
+
   elastMtrx[5][0] = 0.0;
   elastMtrx[5][1] = 0.0;
   elastMtrx[5][2] = 0.0;
   elastMtrx[5][3] = 0.0;
   elastMtrx[5][4] = 0.0;
   elastMtrx[5][5] = factor * (1.0 - 2.0 * puas) / 2.0;
-  
+
   return elastMtrx;
 }
 
 // Расчет матрицы жесткости тетраэдра
-void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d coord4,
-                        double e, double puas, double **gest) {
-  
+void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3,
+                        coord3d coord4, double e, double puas, double** gest) {
+
   printf("  Entering tetrahedronElement...\n");
-  
+
   // Формируем матрицу деформаций
-  double **deformMtrx = (double **)calloc(6, sizeof(double *));
+  double** deformMtrx = (double**)calloc(6, sizeof(double*));
   if (deformMtrx == NULL) {
     printf("  Error: Cannot allocate deformation matrix\n");
     return;
   }
-  
+
   for (int i = 0; i < 6; i++) {
-    deformMtrx[i] = (double *)calloc(12, sizeof(double));
+    deformMtrx[i] = (double*)calloc(12, sizeof(double));
     if (deformMtrx[i] == NULL) {
       printf("  Error: Cannot allocate deformation matrix row %d\n", i);
       // Освобождаем уже выделенную память
@@ -161,12 +222,12 @@ void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d 
       return;
     }
   }
-  
+
   printf("  Forming deformation matrix...\n");
   formationDeformMtrx3d(deformMtrx, coord1, coord2, coord3, coord4);
-  
+
   // Формируем матрицу упругости
-  double **elastMtrx = (double **)calloc(6, sizeof(double *));
+  double** elastMtrx = (double**)calloc(6, sizeof(double*));
   if (elastMtrx == NULL) {
     printf("  Error: Cannot allocate elasticity matrix\n");
     // Освобождаем память
@@ -176,9 +237,9 @@ void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d 
     free(deformMtrx);
     return;
   }
-  
+
   for (int i = 0; i < 6; i++) {
-    elastMtrx[i] = (double *)calloc(6, sizeof(double));
+    elastMtrx[i] = (double*)calloc(6, sizeof(double));
     if (elastMtrx[i] == NULL) {
       printf("  Error: Cannot allocate elasticity matrix row %d\n", i);
       // Освобождаем память
@@ -193,26 +254,27 @@ void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d 
       return;
     }
   }
-  
+
   formationElastMtrx3d(elastMtrx, e, puas);
-  
+
   // Вычисляем объем тетраэдра
-  double detJ = (coord2.x - coord1.x) * ((coord3.y - coord1.y) * (coord4.z - coord1.z) - 
-                                          (coord3.z - coord1.z) * (coord4.y - coord1.y)) -
-                 (coord2.y - coord1.y) * ((coord3.x - coord1.x) * (coord4.z - coord1.z) - 
-                                          (coord3.z - coord1.z) * (coord4.x - coord1.x)) +
-                 (coord2.z - coord1.z) * ((coord3.x - coord1.x) * (coord4.y - coord1.y) - 
-                                          (coord3.y - coord1.y) * (coord4.x - coord1.x));
-  
+  double detJ =
+      (coord2.x - coord1.x) * ((coord3.y - coord1.y) * (coord4.z - coord1.z) -
+                               (coord3.z - coord1.z) * (coord4.y - coord1.y)) -
+      (coord2.y - coord1.y) * ((coord3.x - coord1.x) * (coord4.z - coord1.z) -
+                               (coord3.z - coord1.z) * (coord4.x - coord1.x)) +
+      (coord2.z - coord1.z) * ((coord3.x - coord1.x) * (coord4.y - coord1.y) -
+                               (coord3.y - coord1.y) * (coord4.x - coord1.x));
+
   double V = detJ / 6.0;
   printf("  Tetrahedron volume: %.6f\n", V);
-  
+
   if (fabs(V) < 1e-12) {
     printf("  Warning: Very small or negative volume detected\n");
   }
-  
+
   // Вычисляем матрицу жесткости: K = B^T * D * B * V
-  double **temp1 = (double **)calloc(6, sizeof(double *));
+  double** temp1 = (double**)calloc(6, sizeof(double*));
   if (temp1 == NULL) {
     printf("  Error: Cannot allocate temporary matrix\n");
     // Освобождаем память
@@ -224,9 +286,9 @@ void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d 
     free(deformMtrx);
     return;
   }
-  
+
   for (int i = 0; i < 6; i++) {
-    temp1[i] = (double *)calloc(12, sizeof(double));
+    temp1[i] = (double*)calloc(12, sizeof(double));
     if (temp1[i] == NULL) {
       printf("  Error: Cannot allocate temporary matrix row %d\n", i);
       // Освобождаем память
@@ -243,7 +305,7 @@ void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d 
       return;
     }
   }
-  
+
   // temp1 = D * B
   for (int i = 0; i < 6; i++) {
     for (int j = 0; j < 12; j++) {
@@ -253,7 +315,7 @@ void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d 
       }
     }
   }
-  
+
   // gest = B^T * temp1 * V
   for (int i = 0; i < 12; i++) {
     for (int j = 0; j < 12; j++) {
@@ -263,30 +325,38 @@ void tetrahedronElement(coord3d coord1, coord3d coord2, coord3d coord3, coord3d 
       }
     }
   }
-  
+
   for (int i = 0; i < 6; i++)
     free_memory(3, deformMtrx[i], elastMtrx[i], temp1[i]);
   free_memory(3, deformMtrx, elastMtrx, temp1);
 }
 
 // Сборка локальной матрицы в глобальную
-void assemblyGlobMatr3d(nodeNumber3d node, double **gest, double **kglb) {
+void assemblyGlobMatr3d(nodeNumber3d node, double** gest, double** kglb) {
   int dofs[12];
-  
+
   // Определяем степени свободы для каждого узла
   for (int i = 0; i < 4; i++) {
     int nodeIndex = 0;
     switch (i) {
-      case 0: nodeIndex = node.iys1; break;
-      case 1: nodeIndex = node.iys2; break;
-      case 2: nodeIndex = node.iys3; break;
-      case 3: nodeIndex = node.iys4; break;
+      case 0:
+        nodeIndex = node.iys1;
+        break;
+      case 1:
+        nodeIndex = node.iys2;
+        break;
+      case 2:
+        nodeIndex = node.iys3;
+        break;
+      case 3:
+        nodeIndex = node.iys4;
+        break;
     }
-    dofs[i * 3] = (nodeIndex - 1) * 3;     // x
-    dofs[i * 3 + 1] = (nodeIndex - 1) * 3 + 1; // y
-    dofs[i * 3 + 2] = (nodeIndex - 1) * 3 + 2; // z
+    dofs[i * 3] = (nodeIndex - 1) * 3;          // x
+    dofs[i * 3 + 1] = (nodeIndex - 1) * 3 + 1;  // y
+    dofs[i * 3 + 2] = (nodeIndex - 1) * 3 + 2;  // z
   }
-  
+
   // Собираем в глобальную матрицу
   for (int i = 0; i < 12; i++) {
     for (int j = 0; j < 12; j++) {
@@ -296,65 +366,81 @@ void assemblyGlobMatr3d(nodeNumber3d node, double **gest, double **kglb) {
 }
 
 // Заполнение закрепленных и нагруженных узлов
-void FillConstrainedLoadedNodes3d(int **nodePres, int *lenNodePres,
-                                   int **nodeZakrU, int *lenNodeZakrU,
-                                   int **nodeZakrV, int *lenNodeZakrV,
-                                   int **nodeZakrW, int *lenNodeZakrW,
-                                   double **car, int nys) {
+void FillConstrainedLoadedNodes3d(int** nodePres, int* lenNodePres,
+                                  int** nodeZakrU, int* lenNodeZakrU,
+                                  int** nodeZakrV, int* lenNodeZakrV,
+                                  int** nodeZakrW, int* lenNodeZakrW,
+                                  double** car, int nys) {
   *lenNodePres = 0;
   *lenNodeZakrU = 0;
   *lenNodeZakrV = 0;
   *lenNodeZakrW = 0;
-  
+
   for (int i = 0; i < nys; i++) {
     // Нагруженные узлы (например, верхняя грань)
     if (car[1][i] > 0.9) {  // y > 0.9
       (*lenNodePres)++;
-      int *temp = (int *)realloc(*nodePres, (*lenNodePres) * sizeof(int));
+      int* temp = (int*)realloc(*nodePres, (*lenNodePres) * sizeof(int));
       if (temp == NULL) {
-        if (*nodePres) free(*nodePres);
-        if (*nodeZakrU) free(*nodeZakrU);
-        if (*nodeZakrV) free(*nodeZakrV);
-        if (*nodeZakrW) free(*nodeZakrW);
+        if (*nodePres)
+          free(*nodePres);
+        if (*nodeZakrU)
+          free(*nodeZakrU);
+        if (*nodeZakrV)
+          free(*nodeZakrV);
+        if (*nodeZakrW)
+          free(*nodeZakrW);
         exit(1);
       }
       *nodePres = temp;
       (*nodePres)[*lenNodePres - 1] = i;
     }
-    
+
     // Закрепленные узлы (например, нижняя грань)
     if (car[1][i] < 0.1) {  // y < 0.1
       (*lenNodeZakrU)++;
-      int *temp = (int *)realloc(*nodeZakrU, (*lenNodeZakrU) * sizeof(int));
+      int* temp = (int*)realloc(*nodeZakrU, (*lenNodeZakrU) * sizeof(int));
       if (temp == NULL) {
-        if (*nodePres) free(*nodePres);
-        if (*nodeZakrU) free(*nodeZakrU);
-        if (*nodeZakrV) free(*nodeZakrV);
-        if (*nodeZakrW) free(*nodeZakrW);
+        if (*nodePres)
+          free(*nodePres);
+        if (*nodeZakrU)
+          free(*nodeZakrU);
+        if (*nodeZakrV)
+          free(*nodeZakrV);
+        if (*nodeZakrW)
+          free(*nodeZakrW);
         exit(1);
       }
       *nodeZakrU = temp;
       (*nodeZakrU)[*lenNodeZakrU - 1] = i;
-      
+
       (*lenNodeZakrV)++;
-      temp = (int *)realloc(*nodeZakrV, (*lenNodeZakrV) * sizeof(int));
+      temp = (int*)realloc(*nodeZakrV, (*lenNodeZakrV) * sizeof(int));
       if (temp == NULL) {
-        if (*nodePres) free(*nodePres);
-        if (*nodeZakrU) free(*nodeZakrU);
-        if (*nodeZakrV) free(*nodeZakrV);
-        if (*nodeZakrW) free(*nodeZakrW);
+        if (*nodePres)
+          free(*nodePres);
+        if (*nodeZakrU)
+          free(*nodeZakrU);
+        if (*nodeZakrV)
+          free(*nodeZakrV);
+        if (*nodeZakrW)
+          free(*nodeZakrW);
         exit(1);
       }
       *nodeZakrV = temp;
       (*nodeZakrV)[*lenNodeZakrV - 1] = i;
-      
+
       (*lenNodeZakrW)++;
-      temp = (int *)realloc(*nodeZakrW, (*lenNodeZakrW) * sizeof(int));
+      temp = (int*)realloc(*nodeZakrW, (*lenNodeZakrW) * sizeof(int));
       if (temp == NULL) {
-        if (*nodePres) free(*nodePres);
-        if (*nodeZakrU) free(*nodeZakrU);
-        if (*nodeZakrV) free(*nodeZakrV);
-        if (*nodeZakrW) free(*nodeZakrW);
+        if (*nodePres)
+          free(*nodePres);
+        if (*nodeZakrU)
+          free(*nodeZakrU);
+        if (*nodeZakrV)
+          free(*nodeZakrV);
+        if (*nodeZakrW)
+          free(*nodeZakrW);
         exit(1);
       }
       *nodeZakrW = temp;
@@ -364,32 +450,33 @@ void FillConstrainedLoadedNodes3d(int **nodePres, int *lenNodePres,
 }
 
 // Применение закреплений
-void MakeConstrained3d(int *nodeZakr, int lenNodeZakr, double **kglb, int ndofysla) {
+void MakeConstrained3d(int* nodeZakr, int lenNodeZakr, double** kglb,
+                       int ndofysla) {
   printf("  Applying constraints for %d nodes...\n", lenNodeZakr);
-  
+
   if (nodeZakr == NULL || kglb == NULL) {
     printf("  Error: NULL pointers in MakeConstrained3d\n");
     return;
   }
-  
+
   for (int i = 0; i < lenNodeZakr; i++) {
     int nodeIndex = nodeZakr[i];
     int dofIndex = nodeIndex * ndofysla;
-    
+
     printf("  Constraining node %d (DOF index: %d)\n", nodeIndex, dofIndex);
-    
+
     // Проверяем границы массива
     if (dofIndex < 0 || dofIndex >= 1000) {
       printf("  Warning: DOF index %d out of bounds, skipping\n", dofIndex);
       continue;
     }
-    
+
     // Проверяем, что указатели не NULL
     if (kglb[dofIndex] == NULL) {
       printf("  Warning: kglb[%d] is NULL, skipping\n", dofIndex);
       continue;
     }
-    
+
     // Обнуляем строку и столбец для закрепленной степени свободы
     // Используем более безопасный подход
     for (int j = 0; j < 1000; j++) {  // Предполагаем максимальный размер
@@ -405,12 +492,12 @@ void MakeConstrained3d(int *nodeZakr, int lenNodeZakr, double **kglb, int ndofys
 }
 
 // Задание вектора нагрузок
-void SetLoadVector3d(double *r, int lenNodePres, int *nodePres, int ndofysla,
+void SetLoadVector3d(double* r, int lenNodePres, int* nodePres, int ndofysla,
                      int ndof, float load) {
   for (int i = 0; i < ndof; i++) {
     r[i] = 0.0;
   }
-  
+
   for (int i = 0; i < lenNodePres; i++) {
     int nodeIndex = nodePres[i];
     int dofIndex = nodeIndex * ndofysla + 1;  // Нагрузка по Y
@@ -420,9 +507,9 @@ void SetLoadVector3d(double *r, int lenNodePres, int *nodePres, int ndofysla,
   }
 }
 
-char makeDoubleMtrx(double *dataMtrx, double ***mtrx, int row, int col) {
+char makeDoubleMtrx(double* dataMtrx, double*** mtrx, int row, int col) {
   char error = EXIT_SUCCESS;
-  *mtrx = (double **)calloc(row, sizeof(double *));
+  *mtrx = (double**)calloc(row, sizeof(double*));
   if (*mtrx == NULL) {
     perror("CAN'T MEMORY ALOCATE");
     error = EXIT_FAILURE;
@@ -433,9 +520,9 @@ char makeDoubleMtrx(double *dataMtrx, double ***mtrx, int row, int col) {
   return error;
 }
 
-char makeIntegerMtrx(int *dataMtrx, int ***mtrx, int row, int col) {
+char makeIntegerMtrx(int* dataMtrx, int*** mtrx, int row, int col) {
   char error = EXIT_SUCCESS;
-  *mtrx = (int **)calloc(row, sizeof(int *));
+  *mtrx = (int**)calloc(row, sizeof(int*));
   if (*mtrx == NULL) {
     perror("CAN'T MEMORY ALOCATE");
     error = EXIT_FAILURE;
@@ -460,7 +547,7 @@ char mem_for_arrays(int size, int count_arrs, ...) {
   char error = EXIT_SUCCESS;
   va_list arrs;
   va_start(arrs, count_arrs);
-  double*** arrs_list = (double***)calloc(count_arrs, sizeof(double **));
+  double*** arrs_list = (double***)calloc(count_arrs, sizeof(double**));
   int i;
   for (i = 0; i < count_arrs && !error; i++) {
     arrs_list[i] = va_arg(arrs, double**);
@@ -476,10 +563,10 @@ char mem_for_arrays(int size, int count_arrs, ...) {
   return error;
 }
 
-char read_from_file(char *filename, int *nys, double **dataCar, double ***car,
-                     int *nelem, int **data_jt03, int ***jt03) {
+char read_from_file(char* filename, int* nys, double** dataCar, double*** car,
+                    int* nelem, int** data_jt03, int*** jt03) {
   char error = EXIT_SUCCESS;
-  FILE *file = fopen(filename, "r");
+  FILE* file = fopen(filename, "r");
   if (!file) {
     perror("Error: Cannot open file\n");
     error = EXIT_FAILURE;
@@ -490,7 +577,7 @@ char read_from_file(char *filename, int *nys, double **dataCar, double ***car,
   }
 
   if (!error) {
-    *dataCar = (double *)calloc(*nys * 3, sizeof(double));
+    *dataCar = (double*)calloc(*nys * 3, sizeof(double));
     if (*dataCar == NULL) {
       perror("Error: Cannot allocate memory for node coordinates\n");
       fclose(file);
@@ -498,10 +585,8 @@ char read_from_file(char *filename, int *nys, double **dataCar, double ***car,
     }
 
     for (int i = 0; i < *nys && !error; i++) {
-      if (fscanf(file, "%lf%lf%lf", 
-                &(*dataCar)[i * 3], 
-                &(*dataCar)[i * 3 + 1], 
-                &(*dataCar)[i * 3 + 2]) != 3) {
+      if (fscanf(file, "%lf%lf%lf", &(*dataCar)[i * 3], &(*dataCar)[i * 3 + 1],
+                 &(*dataCar)[i * 3 + 2]) != 3) {
         perror("Error: Cannot read coordinates for node\n");
         free(*dataCar);
         fclose(file);
@@ -514,19 +599,22 @@ char read_from_file(char *filename, int *nys, double **dataCar, double ***car,
       fclose(file);
       error = EXIT_FAILURE;
     }
-    if (error) return error;
-    *data_jt03 = (int *)calloc(*nelem * 4, sizeof(int));
+    if (error)
+      return error;
+    *data_jt03 = (int*)calloc(*nelem * 4, sizeof(int));
     if (*data_jt03 == NULL) {
       perror("Error: Cannot allocate memory for element nodes\n");
       free(*dataCar);
       fclose(file);
       return EXIT_FAILURE;
     }
-    
+
     for (int i = 0; i < *nelem && !error; i++) {
       for (int j = 0; j < 4 && !error; j++) {
-        if (fscanf(file, "%d", &(*data_jt03)[i * 4 + j]) != 1) error = EXIT_FAILURE;
-        else if ((*data_jt03)[i * 4 + j] < 1 || (*data_jt03)[i * 4 + j] > *nys) error = EXIT_FAILURE;
+        if (fscanf(file, "%d", &(*data_jt03)[i * 4 + j]) != 1)
+          error = EXIT_FAILURE;
+        else if ((*data_jt03)[i * 4 + j] < 1 || (*data_jt03)[i * 4 + j] > *nys)
+          error = EXIT_FAILURE;
       }
       if (error) {
         perror("Error: Cannot read element or uncorrect node index\n");
@@ -534,49 +622,54 @@ char read_from_file(char *filename, int *nys, double **dataCar, double ***car,
         fclose(file);
       }
     }
-    
+
     if (!error) {
       error += makeDoubleMtrx(*dataCar, car, *nys, 3);
       error += makeIntegerMtrx(*data_jt03, jt03, *nelem, 4);
     }
-    
+
     fclose(file);
   }
   return error;
 }
 
 // Запись результатов
-void writeResult3d(char *filename, double **strain, double **stress,
-                   double *u, int nelem, int nys, int ndof) {
-  FILE *file = fopen(filename, "w");
-  if (!file) return;
-  
+void writeResult3d(char* filename, double** strain, double** stress, double* u,
+                   int nelem, int nys, int ndof) {
+  FILE* file = fopen(filename, "w");
+  if (!file)
+    return;
+
   fprintf(file, "3D FEM Analysis Results\n");
   fprintf(file, "========================\n\n");
-  
+
   fprintf(file, "Number of nodes: %d\n", nys);
   fprintf(file, "Number of elements: %d\n", nelem);
   fprintf(file, "Total degrees of freedom: %d\n\n", ndof);
-  
+
   fprintf(file, "Displacements:\n");
   for (int i = 0; i < nys; i++) {
-    fprintf(file, "Node %d: ux=%.6e, uy=%.6e, uz=%.6e\n", 
-            i + 1, u[i * 3], u[i * 3 + 1], u[i * 3 + 2]);
+    fprintf(file, "Node %d: ux=%.6e, uy=%.6e, uz=%.6e\n", i + 1, u[i * 3],
+            u[i * 3 + 1], u[i * 3 + 2]);
   }
-  
+
   fprintf(file, "\nStrains:\n");
   for (int i = 0; i < nelem; i++) {
-    fprintf(file, "Element %d: exx=%.6e, eyy=%.6e, ezz=%.6e, exy=%.6e, exz=%.6e, eyz=%.6e\n",
-            i + 1, strain[i][0], strain[i][1], strain[i][2], 
-            strain[i][3], strain[i][4], strain[i][5]);
+    fprintf(file,
+            "Element %d: exx=%.6e, eyy=%.6e, ezz=%.6e, exy=%.6e, exz=%.6e, "
+            "eyz=%.6e\n",
+            i + 1, strain[i][0], strain[i][1], strain[i][2], strain[i][3],
+            strain[i][4], strain[i][5]);
   }
-  
+
   fprintf(file, "\nStresses:\n");
   for (int i = 0; i < nelem; i++) {
-    fprintf(file, "Element %d: sxx=%.6e, syy=%.6e, szz=%.6e, sxy=%.6e, sxz=%.6e, syz=%.6e\n",
-            i + 1, stress[i][0], stress[i][1], stress[i][2], 
-            stress[i][3], stress[i][4], stress[i][5]);
+    fprintf(file,
+            "Element %d: sxx=%.6e, syy=%.6e, szz=%.6e, sxy=%.6e, sxz=%.6e, "
+            "syz=%.6e\n",
+            i + 1, stress[i][0], stress[i][1], stress[i][2], stress[i][3],
+            stress[i][4], stress[i][5]);
   }
-  
+
   fclose(file);
-} 
+}
